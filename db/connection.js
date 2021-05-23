@@ -1,13 +1,16 @@
 require("dotenv").config();
-const mongoose = require("mongoose");
-
 const { MONGODB_URL } = process.env;
-
+const mongoose = require("mongoose");
 //connect
-mongoose.connect(MONGODB_URL, {
+const config = {
   useNewUrlParser: true,
   useUnifiedTopology: true,
-});
+  useCreateIndex: true,
+  useFindAndModify: true
+};
+
+//MAKING THE DATABASE CONNECTION
+mongoose.connect(MONGODB_URL, config)
 
 //messages
 mongoose.connection
@@ -15,4 +18,4 @@ mongoose.connection
   .on("close", () => console.log("disconnected to mongo"))
   .on("error", (error) => console.log(error));
 
-module.exports.mongoose;
+module.exports = mongoose;
