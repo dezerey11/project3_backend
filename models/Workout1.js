@@ -3,7 +3,7 @@ require("dotenv").config();
 
 const {Schema, model} = require("../db/connection")
 
-//CREATING MY TURTLE SCHEMA
+//CREATING MY WORKOUT SCHEMA
 const WorkoutSchema = new Schema({
     title: String,
     text: String,
@@ -12,6 +12,6 @@ const WorkoutSchema = new Schema({
 
 const Workout = model('Workout', WorkoutSchema);
 // console.log("/////////////////");
-// console.log(Turtle);
+
 
 module.exports = Workout;
