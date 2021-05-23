@@ -11,7 +11,6 @@ const WorkoutSchema = new Schema({
 });
 
 const Workout = model('Workout', WorkoutSchema);
-// console.log("/////////////////");
 
 
 module.exports = Workout;
