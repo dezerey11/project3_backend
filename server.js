@@ -8,6 +8,8 @@ const app = express();
 const morgan = require("morgan");
 const cors = require("cors");
 const { PORT = 4000 } = process.env;
+const AuthRouter = require("./controllers/user");
+const auth = require("./auth");
 
 // using middleware
 app.use(cors());
@@ -48,6 +50,7 @@ app.put("/workout/:id", async (req, res) => {
         res.status(400).json(error);
     }
 });
+
 // workout delete
 app.delete("/workout/:id", async (req, res) => {
     try {
@@ -57,4 +60,11 @@ app.delete("/workout/:id", async (req, res) => {
     }
 })
 
+// Routers
+app.get("/", auth, (req, res) => {
+  res.json(req.payload);
+});
+app.use("/auth", AuthRouter);
+
+// Listener
 app.listen(PORT, () => console.log(`port running on ${PORT}`));
