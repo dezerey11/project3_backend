@@ -1,12 +1,17 @@
 require("dotenv").config();
-const mongoose = require("mongoose");
-const { MONGODB_URL } = process.env;
 
-// connect to database
-mongoose.connect(MONGODB_URL, {
+const { MONGODB_URL } = process.env;
+const mongoose = require("mongoose");
+//connect
+const config = {
   useNewUrlParser: true,
   useUnifiedTopology: true,
-});
+  useCreateIndex: true,
+  useFindAndModify: true
+};
+
+//MAKING THE DATABASE CONNECTION
+mongoose.connect(MONGODB_URL, config)
 
 // messages
 mongoose.connection
