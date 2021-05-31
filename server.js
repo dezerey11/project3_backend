@@ -28,9 +28,30 @@ app.get("/workouts", auth, async (req, res) => {
     const user = await User.findOne({ username: req.payload.username });
     res.json(user.workouts);
   } catch (error) {
-    res.status(400).json(error);
+    res.status(400).json({ message: error.message });
   }
 });
+
+// show workout
+app.get("/workouts/:id", auth, async (req, res) => {
+  try {
+    const user = await User.findOne({ username: req.payload.username });
+    // look for workout
+    const workout = user.workouts.find(
+      (workout) => workout._id.toString() === req.params.id
+    );
+    // if workout is found
+    if (workout) {
+      res.json(workout);
+    } else {
+      // if workout is not found
+      res.status(400).json({ message: "CAN NOT FIND WORKOUT" });
+    }
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+});
+
 // workout create route
 app.post("/workouts", auth, async (req, res) => {
   try {
