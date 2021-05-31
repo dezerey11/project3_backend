@@ -18,44 +18,77 @@ app.use(express.json());
 
 // MONGOOSE
 const mongoose = require("./db/connection");
-const { Workout } = require("./models/User");
+const { User, Workout } = require("./models/User");
 
 // ROUTES
-app.get("/", (req, res) => res.send("welcome"));
 
 //index
-app.get("/workout", async (req, res) => {
+app.get("/workouts", auth, async (req, res) => {
   try {
-    res.json(await Workout.find({}));
+    const user = await User.findOne({ username: req.payload.username });
+    res.json(user.workouts);
   } catch (error) {
     res.status(400).json(error);
   }
 });
 // workout create route
-app.post("/workout", async (req, res) => {
+app.post("/workouts", auth, async (req, res) => {
   try {
-    res.json(await Workout.create(req.body));
+    const user = await User.findOne({ username: req.payload.username });
+    const workout = await Workout.create(req.body);
+    user.workouts.push(workout);
+    await user.save();
+    res.json(workout);
   } catch (error) {
-    res.status(400).json(error);
+    res.status(400).json({ message: error.message });
   }
 });
 // workout update
-app.put("/workout/:id", async (req, res) => {
+app.put("/workouts/:id", auth, async (req, res) => {
   try {
-    res.json(
-      await Workout.findByIdAndUpdate(req.params.id, req.body, { new: true })
+    const user = await User.findOne({ username: req.payload.username });
+    // look for index workout is on
+    const workoutIndex = user.workouts.findIndex(
+      (workout) => workout._id.toString() === req.params.id
     );
+
+    // findIndex returns -1 when it can not find the workout
+    if (workoutIndex !== -1) {
+      // if it does find an index
+      const workout = await Workout.create(req.body);
+      user.workouts[workoutIndex] = workout;
+      await user.save();
+      res.json(workout);
+    } else {
+      // if it does not find an index
+      res.status(400).json({ message: "CAN NOT FIND WORKOUT" });
+    }
   } catch (error) {
-    res.status(400).json(error);
+    res.status(400).json({ message: error.message });
   }
 });
 
 // workout delete
-app.delete("/workout/:id", async (req, res) => {
+app.delete("/workouts/:id", auth, async (req, res) => {
   try {
-    res.json(await Workout.findByIdAndRemove(req.params.id));
+    const user = await User.findOne({ username: req.payload.username });
+    // look for index workout is on
+    const workoutIndex = user.workouts.findIndex(
+      (workout) => workout._id.toString() === req.params.id
+    );
+
+    // findIndex returns -1 when it can not find the workout
+    if (workoutIndex !== -1) {
+      // if it does find an index
+      user.workouts.splice(workoutIndex, 1);
+      await user.save();
+      res.status(204).send();
+    } else {
+      // if it does not find an index
+      res.status(400).json({ message: "CAN NOT FIND WORKOUT" });
+    }
   } catch (error) {
-    res.status(400).json(error);
+    res.status(400).json({ message: error.message });
   }
 });
 
