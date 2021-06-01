@@ -8,6 +8,8 @@ const app = express();
 const morgan = require("morgan");
 const cors = require("cors");
 const { PORT = 4000 } = process.env;
+const AuthRouter = require("./controllers/user");
+const auth = require("./auth");
 
 // using middleware
 app.use(cors());
@@ -16,45 +18,106 @@ app.use(express.json());
 
 // MONGOOSE
 const mongoose = require("./db/connection");
-const Workout = require("./models/Workout1");
+const { User, Workout } = require("./models/User");
 
 // ROUTES
-app.get("/", (req, res) => res.send("hello MARIALAINA"));
 
 //index
-app.get("/workout", async (req, res) => {
-    try {
-        res.json(await Workout.find({}));
-    } catch (error){
-        res.status(400).json(error);
-    }
-
+app.get("/workouts", auth, async (req, res) => {
+  try {
+    const user = await User.findOne({ username: req.payload.username });
+    res.json(user.workouts);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
 });
-// workout create route
-app.post("/workout", async (req, res) => {
-    try {
-        res.json(await Workout.create(req.body));
-    } catch (error) {
-        res.status(400).json(error);
+
+// show workout
+app.get("/workouts/:id", auth, async (req, res) => {
+  try {
+    const user = await User.findOne({ username: req.payload.username });
+    // look for workout
+    const workout = user.workouts.find(
+      (workout) => workout._id.toString() === req.params.id
+    );
+    // if workout is found
+    if (workout) {
+      res.json(workout);
+    } else {
+      // if workout is not found
+      res.status(400).json({ message: "CAN NOT FIND WORKOUT" });
     }
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+});
+
+// workout create route
+app.post("/workouts", auth, async (req, res) => {
+  try {
+    const user = await User.findOne({ username: req.payload.username });
+    const workout = await Workout.create(req.body);
+    user.workouts.push(workout);
+    await user.save();
+    res.json(workout);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
 });
 // workout update
-app.put("/workout/:id", async (req, res) => {
-    try {
-        res.json(
-            await Workout.findByIdAndUpdate(req.params.id, req.body, { new: true})
-        )
-    } catch (error) {
-        res.status(400).json(error);
-    }
-});
-// workout delete
-app.delete("/workout/:id", async (req, res) => {
-    try {
-        res.json(await Workout.findByIdAndRemove(req.params.id))
-    } catch (error){
-        res.status(400).json(error); 
-    }
-})
+app.put("/workouts/:id", auth, async (req, res) => {
+  try {
+    const user = await User.findOne({ username: req.payload.username });
+    // look for index workout is on
+    const workoutIndex = user.workouts.findIndex(
+      (workout) => workout._id.toString() === req.params.id
+    );
 
+    // findIndex returns -1 when it can not find the workout
+    if (workoutIndex !== -1) {
+      // if it does find an index
+      const workout = await Workout.create(req.body);
+      user.workouts[workoutIndex] = workout;
+      await user.save();
+      res.json(workout);
+    } else {
+      // if it does not find an index
+      res.status(400).json({ message: "CAN NOT FIND WORKOUT" });
+    }
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+});
+
+// workout delete
+app.delete("/workouts/:id", auth, async (req, res) => {
+  try {
+    const user = await User.findOne({ username: req.payload.username });
+    // look for index workout is on
+    const workoutIndex = user.workouts.findIndex(
+      (workout) => workout._id.toString() === req.params.id
+    );
+
+    // findIndex returns -1 when it can not find the workout
+    if (workoutIndex !== -1) {
+      // if it does find an index
+      user.workouts.splice(workoutIndex, 1);
+      await user.save();
+      res.status(204).send();
+    } else {
+      // if it does not find an index
+      res.status(400).json({ message: "CAN NOT FIND WORKOUT" });
+    }
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+});
+
+// Routers
+app.get("/", auth, (req, res) => {
+  res.json(req.payload);
+});
+app.use("/auth", AuthRouter);
+
+// Listener
 app.listen(PORT, () => console.log(`port running on ${PORT}`));

@@ -1,4 +1,5 @@
 require("dotenv").config();
+
 const { MONGODB_URL } = process.env;
 const mongoose = require("mongoose");
 //connect
@@ -12,7 +13,7 @@ const config = {
 //MAKING THE DATABASE CONNECTION
 mongoose.connect(MONGODB_URL, config)
 
-//messages
+// messages
 mongoose.connection
   .on("open", () => console.log("connected to mongo"))
   .on("close", () => console.log("disconnected to mongo"))
